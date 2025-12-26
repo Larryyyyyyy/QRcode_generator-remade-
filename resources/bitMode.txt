@@ -1,0 +1,95 @@
+&#032;	20	 	&sp;	space	 
+&#033;	21	!	&excl;	exclamation mark	 
+&#034;	22	"	&quot;	double quotation mark	 
+&#035;	23	#	&num;	number sign, pound	 
+&#036;	24	$	&dollar;	dollar sign	 
+&#037;	25	%	&percnt;	percent sign	 
+&#038;	26	&	&amp;	ampersand	 
+&#039;	27	'	&apos;	apostrophe, single quote mark	 
+&#040;	28	(	&lpar;	left parenthesis	 
+&#041;	29	)	&rpar;	right parenthesis	 
+&#042;	2A	*	&ast;	asterisk	 
+&#043;	2B	+	&plus;	plus sign	 
+&#044;	2C	,	&comma;	comma	 
+&#045;	2D	-	&minus;   &hyphen;	minus sign, hyphen	 
+&#046;	2E	.	&period;	period, decimal point, full stop	 
+&#047;	2F	/	&sol;	slash, virgule, solidus	 
+&#048;	30	0	 	digit 0	 
+&#049;	31	1	 	digit 1	 
+&#050;	32	2	 	digit 2	 
+&#051;	33	3	 	digit 3	 
+&#052;	34	4	 	digit 4	 
+&#053;	35	5	 	digit 5	 
+&#054;	36	6	 	digit 6	 
+&#055;	37	7	 	digit 7	 
+&#056;	38	8	 	digit 8	 
+&#057;	39	9	 	digit 9	 
+&#058;	3A	:	&colon;	colon	 
+&#059;	3B	;	&semi;	semicolon	 
+&#060;	3C	<	&lt;	less-than sign	 
+&#061;	3D	=	&equals;	equal sign	 
+&#062;	3E	>	&gt;	greater-than sign	 
+&#063;	3F	?	&quest;	question mark	 
+&#064;	40	@	&commat;	commercial at sign	 
+&#065;	41	A	 	capital A	 
+&#066;	42	B	 	capital B	 
+&#067;	43	C	 	capital C	 
+&#068;	44	D	 	capital D	 
+&#069;	45	E	 	capital E	 
+&#070;	46	F	 	capital F	 
+&#071;	47	G	 	capital G	 
+&#072;	48	H	 	capital H	 
+&#073;	49	I	 	capital I	 
+&#074;	4A	J	 	capital J	 
+&#075;	4B	K	 	capital K	 
+&#076;	4C	L	 	capital L	 
+&#077;	4D	M	 	capital M	 
+&#078;	4E	N	 	capital N	 
+&#079;	4F	O	 	capital O	 
+&#080;	50	P	 	capital P	 
+&#081;	51	Q	 	capital Q	 
+&#082;	52	R	 	capital R	 
+&#083;	53	S	 	capital S	 
+&#084;	54	T	 	capital T	 
+&#085;	55	U	 	capital U	 
+&#086;	56	V	 	capital V	 
+&#087;	57	W	 	capital W	 
+&#088;	58	X	 	capital X	 
+&#089;	59	Y	 	capital Y	 
+&#090;	5A	Z	 	capital Z	 
+&#091;	5B	[	&lsqb;	left square bracket	 
+&#092;	5C	\	&bsol;	backslash, reverse solidus	 
+&#093;	5D	]	&rsqb;	right square bracket	 
+&#094;	5E	^	&circ;	spacing circumflex accent	 
+&#095;	5F	_	&lowbar;   &horbar;	spacing underscore, low line, horizontal bar	 
+&#096;	60	`	&grave;	spacing grave accent, back apostrophe	 
+&#097;	61	a	 	small a	 
+&#098;	62	b	 	small b	 
+&#099;	63	c	 	small c	 
+&#100;	64	d	 	small d	 
+&#101;	65	e	 	small e	 
+&#102;	66	f	 	small f	 
+&#103;	67	g	 	small g	 
+&#104;	68	h	 	small h	 
+&#105;	69	i	 	small i	 
+&#106;	6A	j	 	small j	 
+&#107;	6B	k	 	small k	 
+&#108;	6C	l	 	small l	 
+&#109;	6D	m	 	small m	 
+&#110;	6E	n	 	small n	 
+&#111;	6F	o	 	small o	 
+&#112;	70	p	 	small p	 
+&#113;	71	q	 	small q	 
+&#114;	72	r	 	small r	 
+&#115;	73	s	 	small s	 
+&#116;	74	t	 	small t	 
+&#117;	75	u	 	small u	 
+&#118;	76	v	 	small v	 
+&#119;	77	w	 	small w	 
+&#120;	78	x	 	small x	 
+&#121;	79	y	 	small y	 
+&#122;	7A	z	 	small z	 
+&#123;	7B	{	&lcub;	left brace, left curly bracket	 
+&#124;	7C	|	&verbar;	vertical bar	 
+&#125;	7D	}	&rcub;	right brace, right curly bracket	 
+&#126;	7E	~	&tilde;	tilde accent	 
