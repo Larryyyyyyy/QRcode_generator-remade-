@@ -9,7 +9,21 @@ uint16_t Utf8ToSjis(const string& utf8char) {
     char sjis[3];
     WideCharToMultiByte(932, 0, wstr, -1, sjis, sizeof(sjis), NULL, NULL);
     delete[] wstr;
-    return ((uint8_t)sjis[0] << 8) | (uint8_t)sjis[1];
+    return (uint16_t(uint8_t(sjis[0])) << 8) | uint8_t(sjis[1]);
+}
+string SjisToUtf8(uint16_t gbk) {
+    /*
+    将输入的 Sjis 码值转为 UTF-8 字符
+    */
+    char sjis[3];
+    sjis[0] = static_cast<char>((gbk >> 8) & 0xFF);
+    sjis[1] = static_cast<char>(gbk & 0xFF);
+    sjis[2] = '\0';
+    wchar_t wbuf[2] = {0};
+    MultiByteToWideChar(932, 0, sjis, -1, wbuf, 2);
+    char utf8[8] = {0};
+    WideCharToMultiByte(CP_UTF8, 0, wbuf, -1, utf8, 8, NULL, NULL);
+    return string(utf8);
 }
 string Utf8ToGbk(const string& utf8Str) {
 	/*

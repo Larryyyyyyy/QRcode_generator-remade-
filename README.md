@@ -26,8 +26,7 @@ QRcode(remade)/
 │   ├── encodeConversion.cpp        # Utf-8 到 sjis 和 GBK 编码的转换
 │   └── reedSolomon.cpp             # 里德所罗门编码的实现
 ├── out/
-│   ├── example.bmp                 # 本项目生成的二维码, 指向本项目
-│   └── 1.bmp                       # 测试生成的二维码
+│   └── example.bmp                 # 本项目生成的二维码, 指向本项目
 ├── resources/
 │   ├── bitMode.txt                 # ASCII 码字符对照表, 用于参考, 未使用
 │   └── sjis.tbl                    # sjis 编码对照表, 用于参考, 未使用

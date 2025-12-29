@@ -42,7 +42,7 @@ vector<int> ReedSolomonEncoder::encode(const vector<int>& data) {
             generator_poly[j] = gf_add(generator_poly[j], gf_mul(generator_poly[j - 1], root));
         }
     }
-    // 计算纠错码：计算多项式的校验和(除法得到纠错码)
+    // 计算纠错码: 计算多项式的校验和(除法得到纠错码)
     vector<int> codeword(n, 0);
     for (int i = 0; i < k; ++i) {
         codeword[i] = msg[i];
@@ -53,7 +53,7 @@ vector<int> ReedSolomonEncoder::encode(const vector<int>& data) {
             codeword[i + j] = gf_add(codeword[i + j], gf_mul(generator_poly[j], coef));
         }
     }
-    // 将生成的纠错码加到最后，最终得到带有纠错码的完整代码
+    // 将生成的纠错码加到最后, 最终得到带有纠错码的完整代码
     vector<int> encoded_msg(n, 0);
     for (int i = 0; i < k; ++i) {
         encoded_msg[i] = msg[i];

@@ -21,6 +21,15 @@ public:
     ReedSolomonEncoder(int n, int k);
     vector<int> encode(const vector<int>& data);
 };
+class ReedSolomonDecoder {
+private:
+    int n, k;
+    GF256 gf;
+public:
+    ReedSolomonDecoder(int n, int k);
+    vector<int> decode(const vector<int>& data);
+};
 uint16_t Utf8ToSjis(const string& utf8char); // 获取Sjis编码
+string SjisToUtf8(const uint16_t sjis); // 获取UTF-8编码
 string Utf8ToGbk(const string& utf8Str); // UTF-8转GBK编码
 #endif // !UTILS_H

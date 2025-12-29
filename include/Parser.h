@@ -7,6 +7,7 @@
 #include <bitset>
 #include <fstream>
 #include <string>
+#include <assert.h>
 using namespace std;
 const vector<char> alphaMode = {'+', '-', '*', '/', '.', '%', '$', ':', ' '}; // 字符模式字符集
 const vector<int> dataCapacity[4][4] = { // 四个模式和 H Q M L 纠错等级
@@ -71,7 +72,7 @@ const vector<int> blockLength2[4] = {
     {0,0,0,0,0,0,0,0,39,37,44,51,37,38,41,42,46,47,44,45,42,0,0,48,46,48,47,46,46,46,48,47,47,47,47,48,48,47,47,48,48},
     {0,0,0,0,0,0,0,0,0,0,69,0,93,0,116,88,99,108,121,114,108,117,112,122,118,107,115,123,118,117,116,116,0,116,116,122,122,123,123,118,119},
 };
-class QRcode {
+class encoder {
 private:
 	int version; // 二维码版本
 	int width, height; // 二维码尺寸
@@ -85,13 +86,13 @@ private:
     int index; // 为简便, 纠错等级对应的索引
 	string text; // 文本
 	char data[10010]; // 编码数据
-	char rdata[10010]; // 最终打印的数据
 	bool filled[512][512]; // 是否为非格式区
-	vector<vector<uint32_t>> pixels; // 编码
 	vector<vector<uint32_t>> rpixels; // 像素信息
 public:
-	QRcode(int scale, int errorCorrectionLevel, int mask, string text);
-	~QRcode();
+	char rdata[10010]; // 最终打印的数据
+	vector<vector<uint32_t>> pixels; // 编码
+	encoder(int scale, int errorCorrectionLevel, int mask, string text);
+	~encoder();
 	vector<vector<uint32_t>> drawAll(); // 绘制二维码
 	void drawPositionDetectionPattern(); // 绘制定位图
 	void drawTimingPattern(); // 绘制时序图
@@ -105,5 +106,33 @@ public:
 	int getData(); // 得到编码数据
 	int getExtraData(); // 得到纠错码
 	vector<int> solveBlockData(vector<int> v); // 处理一块的数据
+};
+class decoder {
+private:
+    int version; // 二维码版本
+	int width, height; // 二维码尺寸
+	char errorCorrectionLevel; // 纠错等级
+	int mask; // 模板编号
+	int mode; // 编码模式
+    int index; // 为简便, 纠错等级对应的索引
+	char data[10010]; // 编码数据
+	char rdata[10010]; // 最终打印的数据
+	string text; // 文本
+    vector<vector<uint32_t>> pixels;
+public:
+    decoder(vector<vector<uint32_t>> _pixels);
+    ~decoder();
+    void revertAll();
+    void revertPositionDetectionPattern();
+    void revertTimingPattern();
+    void revertAlignmentPattern();
+    void revertFormatInformation();
+    void revertVersionInformation();
+    void revertMaskcode();
+    void revertDataInformation();
+    vector<int> revertBlockData(const vector<int>& blockData);
+    void revertExtraData();
+    void revertData();
+    void printText();
 };
 #endif // !PARSER_H

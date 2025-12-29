@@ -1,7 +1,7 @@
 #include "../include/Parser.h"
 #include "../include/Utils.h"
 #include <windows.h>
-QRcode::QRcode(int scale, int errorCorrectionLevel, int mask, string text)
+encoder::encoder(int scale, int errorCorrectionLevel, int mask, string text)
     : scale(scale), errorCorrectionLevel(errorCorrectionLevel), mask(mask), text(text) {
 	memset(filled, 0, sizeof(filled));
     index = errorCorrectionLevel == 'H' ? 0 : errorCorrectionLevel == 'Q' ? 1 : errorCorrectionLevel == 'M' ? 2 : 3;
@@ -9,15 +9,19 @@ QRcode::QRcode(int scale, int errorCorrectionLevel, int mask, string text)
 	version = confirmVersion();
 	width = ((version - 1) * 4 + 21), height = ((version - 1) * 4 + 21);
 	vector<uint32_t> temp(this->width + 2, 2);
-	for (int i = 0; i <= this->height + 2; ++i) pixels.push_back(temp);
+	for (int i = 0; i < this->height + 2; ++i) pixels.push_back(temp);
 	rwidth = ((this->width + 2) * this->scale);
 	rheight = ((this->height + 2) * this->scale);
 	vector<uint32_t> rtemp(this->rwidth, 2);
 	for (int i = 0; i <= this->rheight; ++i) rpixels.push_back(rtemp);
 }
-QRcode::~QRcode() {}
-vector<vector<uint32_t>> QRcode::drawAll() {
+encoder::~encoder() {}
+vector<vector<uint32_t>> encoder::drawAll() {
 	int len = getData();
+	// data[0]='#';
+	// for(auto c:data) {
+	// 	cout<<c;
+	// }
 	len = getExtraData();
 	drawPositionDetectionPattern();
 	drawTimingPattern();
@@ -28,8 +32,8 @@ vector<vector<uint32_t>> QRcode::drawAll() {
 	drawMaskcode();
 	for (int i = 0; i <= width + 1; ++i) {
 		for (int j = 0; j <= height + 1; ++j) {
-			for (int k = i * scale; k <= i * scale + scale - 1; ++k) {
-				for (int t = j * scale; t <= j * scale + scale - 1; ++t) {
+			for (int k = i * scale; k < i * scale + scale; ++k) {
+				for (int t = j * scale; t < j * scale + scale; ++t) {
 					rpixels[k][t] = (!pixels[i][j]) ? 0x00000000 : 0x00FFFFFF;
 				}
 			}
@@ -37,13 +41,13 @@ vector<vector<uint32_t>> QRcode::drawAll() {
 	}
 	return rpixels;
 }
-void QRcode::drawPositionDetectionPattern() {
+void encoder::drawPositionDetectionPattern() {
 	/*
 	绘制定位图案(也就是三个大方块)
 	*/
 	for (int i = 1; i <= 7; ++i) {
 		for (int j = 1; j <= 7; ++j) {
-			if ((i==2&&2<=j&&j<=6)||(i>=3&&i<=5&&(j==2||j==6))||(i==6&&2<=j&&j<=6)) pixels[i][j] = pixels[i + width - 7][j] = pixels[i][j + width - 7] = 1;
+			if ((i==2 && 2<=j && j<=6) || (i>=3 && i<=5 && (j==2 || j==6)) || (i==6 && 2<=j && j<=6)) pixels[i][j] = pixels[i + width - 7][j] = pixels[i][j + width - 7] = 1;
 			else pixels[i][j] = pixels[i + width - 7][j] = pixels[i][j + width - 7] = 0;
 		}
 	}
@@ -52,7 +56,7 @@ void QRcode::drawPositionDetectionPattern() {
 		pixels[8][i] = pixels[8][width - i + 1] = pixels[width - 8 + 1][i] = 1;
 	}
 }
-void QRcode::drawTimingPattern() {
+void encoder::drawTimingPattern() {
 	/*
 	绘制时序图案(也就是横纵各一条的交替黑白线)
 	*/
@@ -67,7 +71,7 @@ void QRcode::drawTimingPattern() {
 		x ^= 1;
 	}
 }
-void QRcode::drawAlignmentPattern() {
+void encoder::drawAlignmentPattern() {
 	/*
 	绘制对齐图案(小方块)
 	*/
@@ -337,7 +341,7 @@ void QRcode::drawAlignmentPattern() {
 		}
 	}
 }
-void QRcode::drawFormatInformation() {
+void encoder::drawFormatInformation() {
 	/*
 	绘制格式信息(也就是纠错等级+掩码模式)
 	*/
@@ -377,7 +381,7 @@ void QRcode::drawFormatInformation() {
 		x >>= 1;
 	}
 }
-void QRcode::drawVersionInformation() {
+void encoder::drawVersionInformation() {
 	/*
 	绘制版本信息(版本7及以上才有)
 	*/
@@ -403,33 +407,33 @@ void QRcode::drawVersionInformation() {
 		}
 	}
 }
-void QRcode::drawDataInformation() {
+void encoder::drawDataInformation() {
 	/*
 	蛇形绘制数据信息(也就是实际存储的信息)
 	*/
 	int range = 1;
 	bool up = 1;
 	for (int j = width - 1; j >= 1; j -= 2) {
-		if (j == 6)--j;
+		if (j == 6) --j;
 		if (up) {
 			for (int i = height; i >= 1; --i) {
-				if (pixels[i][j + 1] == 2)pixels[i][j + 1] = rdata[range++] == '1' ? 1 : 0, filled[i][j + 1] = 1;
-				if (pixels[i][j] == 2)pixels[i][j] = rdata[range++] == '1' ? 1 : 0, filled[i][j] = 1;
+				if (pixels[i][j + 1] == 2) pixels[i][j + 1] = rdata[range++] == '1' ? 1 : 0, filled[i][j + 1] = 1;
+				if (pixels[i][j] == 2) pixels[i][j] = rdata[range++] == '1' ? 1 : 0, filled[i][j] = 1;
 			}
 			up = 0;
 			continue;
 		}
 		if (!up) {
 			for (int i = 1; i <= height; ++i) {
-				if (pixels[i][j + 1] == 2)pixels[i][j + 1] = rdata[range++] == '1' ? 1 : 0, filled[i][j + 1] = 1;
-				if (pixels[i][j] == 2)pixels[i][j] = rdata[range++] == '1' ? 1 : 0, filled[i][j] = 1;
+				if (pixels[i][j + 1] == 2) pixels[i][j + 1] = rdata[range++] == '1' ? 1 : 0, filled[i][j + 1] = 1;
+				if (pixels[i][j] == 2) pixels[i][j] = rdata[range++] == '1' ? 1 : 0, filled[i][j] = 1;
 			}
 			up = 1;
 			continue;
 		}
 	}
 }
-void QRcode::drawMaskcode() {
+void encoder::drawMaskcode() {
 	/*
 	应用掩码模式(使得二维码更易于扫描)
 	*/
@@ -472,7 +476,7 @@ void QRcode::drawMaskcode() {
 		}
 	}
 }
-int QRcode::judgeMode() {
+int encoder::judgeMode() {
     /*
     模式判断规则:
     1. 数字模式: 仅包含数字0-9
@@ -519,7 +523,7 @@ int QRcode::judgeMode() {
 	}
 	return rmode;
 }
-int QRcode::confirmVersion() {
+int encoder::confirmVersion() {
     /*
     不同纠错等级, 不同模式下, 不同版本的最大数据容量不同
     */
@@ -545,7 +549,7 @@ int QRcode::confirmVersion() {
 	}
 	return 0;
 }
-int QRcode::getData() {
+int encoder::getData() {
     /*
     解析输入数据, 生成对应的二进制数据流
     */
@@ -749,41 +753,41 @@ int QRcode::getData() {
 	}
 	return range;
 }
-int QRcode::getExtraData() {
+int encoder::getExtraData() {
 	/*
 	纠错码生成与数据交织
 	1. 根据版本号和纠错等级, 确定数据块的数量和每个数据块的长度
-	2. 对每个数据块进行Reed-Solomon编码, 生成纠错码
+	2. 对每个数据块进行 Reed-Solomon 编码, 生成纠错码
 	3. 将数据块和纠错码进行交织, 生成最终的数据流
 	*/
 	vector<int> temp;
 	vector<vector<int>> rec;
 	int range = 1;
-	for (int i = 1; i <= blockNum1[index][version]; ++i) {
+	for (int i = 0; i < blockNum1[index][version]; ++i) {
 		temp.clear();
 		for (int j = 1; j <= (blockLength1[index][version] << 3); ++j) {
-			temp.push_back(data[j + (i - 1) * (blockLength1[index][version] << 3)]);
+			temp.push_back(data[j + i * (blockLength1[index][version] << 3)]);
 		}
 		rec.push_back(solveBlockData(temp));
 	}
 	if (blockNum2[index][version]) { // 不止一组
-		for (int i = 1; i <= blockNum2[index][version]; ++i) {
+		for (int i = 0; i < blockNum2[index][version]; ++i) {
 			temp.clear();
 			for (int j = 1; j <= (blockLength2[index][version] << 3); ++j) {
-				temp.push_back(data[j + (i - 1) * (blockLength2[index][version] << 3) + blockNum1[index][version] * (blockLength1[index][version] << 3)]);
+				temp.push_back(data[j + i * (blockLength2[index][version] << 3) + blockNum1[index][version] * (blockLength1[index][version] << 3)]);
 			}
 			rec.push_back(solveBlockData(temp));
 		}
 		for (int i = 0; i < blockLength2[index][version]; ++i) {
 			for (int j = 0; j < blockNum1[index][version] + blockNum2[index][version]; ++j) {
-				if (j < blockNum1[index][version]) {
-					if (i == blockLength1[index][version]) continue;
+				if (j < blockNum1[index][version] && i == blockLength1[index][version]) {
+					continue;
 				}
 				for (int k = range + 7, x = rec[j][i]; k >= range; --k) rdata[k] = x % 2 + 48, x >>= 1;
 				range += 8;
 			}
 		}
-		for (int i = blockLength1[index][version]; i < rec[0].size(); ++i) {
+		for (int i = blockLength1[index][version]; i < blockLength1[index][version] + errorLength[index][version]; ++i) {
 			for (int j = 0; j < blockNum1[index][version]; ++j) {
 				for (int k = range + 7, x = rec[j][i]; k >= range; --k) rdata[k] = x % 2 + 48, x >>= 1;
 				range += 8;
@@ -795,8 +799,7 @@ int QRcode::getExtraData() {
 		}
 	}
 	else {
-		temp.clear();
-		for (int i = 0; i < rec[0].size(); ++i) {
+		for (int i = 0; i < blockLength1[index][version] + errorLength[index][version]; ++i) {
 			for (int j = 0; j < blockNum1[index][version]; ++j) {
 				for (int k = range + 7, x = rec[j][i]; k >= range; --k) {
 					rdata[k] = x % 2 + 48;
@@ -807,14 +810,14 @@ int QRcode::getExtraData() {
 		}
 	}
 	if (14 <= version && version <= 20) {
-		for (int i = 1; i <= 3; ++i) rdata[range++] = 0;
+		for (int i = 1; i <= 3; ++i) rdata[range++] = '0';
 	}
 	if (2 <= version && version <= 6) {
-		for (int i = 1; i <= 7; ++i) rdata[range++] = 0;
+		for (int i = 1; i <= 7; ++i) rdata[range++] = '0';
 	}
 	return range - 1;
 }
-vector<int> QRcode::solveBlockData(vector<int> v) {
+vector<int> encoder::solveBlockData(vector<int> v) {
 	/*
 	对单个数据块进行Reed-Solomon编码, 生成纠错码
 	*/
@@ -828,4 +831,684 @@ vector<int> QRcode::solveBlockData(vector<int> v) {
 	}
 	ReedSolomonEncoder encoder(len1 + len2, len1); // 总长度和数据码长度
 	return encoder.encode(blockData);
+}
+decoder:: decoder(vector<vector<uint32_t>> _pixels) {
+	pixels = _pixels;
+	errorCorrectionLevel = 'H';
+	mask = 3;
+	width = _pixels.size() - 2;
+	height = _pixels[0].size() - 2;
+	version = (width - 21) / 4 + 1;
+	revertAll();
+	printText();
+}
+decoder:: ~decoder() {}
+void decoder::revertAll() {
+	/*
+	还原所有功能图案
+	*/
+	revertPositionDetectionPattern();
+	revertTimingPattern();
+	revertAlignmentPattern();
+	revertFormatInformation();
+	revertVersionInformation();
+	revertMaskcode();
+	revertDataInformation();
+	revertExtraData();
+	revertData();
+}
+void decoder::revertPositionDetectionPattern() {
+	/*
+	还原定位图案(也就是三个大方块)
+	这里顺带实现把边缘的白色边框也还原了
+	*/
+	for (int i = 1; i <= 7; ++i) {
+		for (int j = 1; j <= 7; ++j) {
+			if ((i==2 && 2<=j && j<=6) || (i>=3 && i<=5 && (j==2 || j==6)) || (i==6 && 2<=j && j<=6)) pixels[i][j] = pixels[i + width - 7][j] = pixels[i][j + width - 7] = 2;
+			else pixels[i][j] = pixels[i + width - 7][j] = pixels[i][j + width - 7] = 2;
+		}
+	}
+	for (int i = 1; i <= 8; ++i) {
+		pixels[i][8] = pixels[i][width - 8 + 1] = pixels[width - i + 1][8] = 2;
+		pixels[8][i] = pixels[8][width - i + 1] = pixels[width - 8 + 1][i] = 2;
+	}
+	for (int i = 0; i <= width + 1; ++i) {
+		pixels[0][i] = pixels[width + 1][i] = 2;
+		pixels[i][0] = pixels[i][height + 1] = 2;
+	}
+}
+void decoder::revertTimingPattern() {
+	/*
+	还原时序图案(也就是横纵各一条的交替黑白线)
+	*/
+	for (int i = 9; i <= width - 8; ++i) {
+		pixels[7][i] = 2;
+	}
+	for (int i = 9; i <= width - 8; ++i) {
+		pixels[i][7] = 2;
+	}
+}
+void decoder::revertAlignmentPattern() {
+	/*
+	还原对齐图案(小方块)
+	*/
+	if (2 <= version && version <= 6) {
+		int pos = version * 4 + 11;
+		pixels[pos][pos] = 2;
+		for (int i = pos - 2; i <= pos + 2; ++i) {
+			pixels[pos - 2][i] = pixels[i][pos - 2] = pixels[pos + 2][i] = pixels[i][pos + 2] = 2;
+		}
+		for (int i = pos - 1; i <= pos + 1; ++i) {
+			pixels[pos - 1][i] = pixels[i][pos - 1] = pixels[pos + 1][i] = pixels[i][pos + 1] = 2;
+		}
+	}
+	if (7 <= version && version <= 13) {
+		int pos[4] = { 0,7,version * 2 + 9, version * 4 + 11};
+		for (int i = 1; i <= 3; ++i) {
+			for (int j = 1; j <= 3; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 3) || (i == 3 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (14 <= version && version <= 16) {
+		int pos[5] = {0,7,27,version * 2 + 19, version * 4 + 11};
+		for (int i = 1; i <= 4; ++i) {
+			for (int j = 1; j <= 4; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 4) || (i == 4 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (17 <= version && version <= 19) {
+		int pos[5] = {0, 7, 30, version * 2 + 21, version * 4 + 11};
+		for (int i = 1; i <= 4; ++i) {
+			for (int j = 1; j <= 4; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 4) || (i == 4 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 20) {
+		int pos[5] = {0, 7, 35, 63, 91};
+		for (int i = 1; i <= 4; ++i) {
+			for (int j = 1; j <= 4; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 4) || (i == 4 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 21) {
+		int pos[6] = {0, 7, 29, 51, 73, 95};
+		for (int i = 1; i <= 5; ++i) {
+			for (int j = 1; j <= 5; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 5) || (i == 5 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 22) {
+		int pos[6] = {0, 7, 27, 51, 75, 99};
+		for (int i = 1; i <= 5; ++i) {
+			for (int j = 1; j <= 5; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 5) || (i == 5 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 23) {
+		int pos[6] = {0, 7, 31, 55, 79, 103};
+		for (int i = 1; i <= 5; ++i) {
+			for (int j = 1; j <= 5; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 5) || (i == 5 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 24) {
+		int pos[6] = {0, 7, 29, 55, 81, 107};
+		for (int i = 1; i <= 5; ++i) {
+			for (int j = 1; j <= 5; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 5) || (i == 5 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 25) {
+		int pos[6] = {0, 7, 33, 59, 85, 111};
+		for (int i = 1; i <= 5; ++i) {
+			for (int j = 1; j <= 5; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 5) || (i == 5 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 26) {
+		int pos[6] = {0, 7, 31, 59, 87, 115};
+		for (int i = 1; i <= 5; ++i) {
+			for (int j = 1; j <= 5; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 5) || (i == 5 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 27) {
+		int pos[6] = {0, 7, 35, 63, 91, 119};
+		for (int i = 1; i <= 5; ++i) {
+			for (int j = 1; j <= 5; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 5) || (i == 5 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (28 <= version && version <= 29) {
+		int pos[7] = {0, 7, version * 4 - 85, version * 4 - 61, version * 4 - 37, version * 4 - 13, version * 4 + 11};
+		for (int i = 1; i <= 6; ++i) {
+			for (int j = 1; j <= 6; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 6) || (i == 6 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (30 <= version && version <= 32) {
+		int pos[7] = {0, 7, version * 4 - 93, version * 4 - 67, version * 4 - 41, version * 4 - 15, version * 4 + 11};
+		for (int i = 1; i <= 6; ++i) {
+			for (int j = 1; j <= 6; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 6) || (i == 6 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (33 <= version && version <= 34) {
+		int pos[7] = {0, 7, version * 4 - 101, version * 4 - 73, version * 4 - 45, version * 4 - 17, version * 4 + 11};
+		for (int i = 1; i <= 6; ++i) {
+			for (int j = 1; j <= 6; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 6) || (i == 6 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (version == 35) {
+		int pos[8] = {0, 7, 31, 55, 79, 103, 127, 151};
+		for (int i = 1; i <= 7; ++i) {
+			for (int j = 1; j <= 7; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 7) || (i == 7 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (36 <= version && version <= 38) {
+		int pos[8] = {0, 7, version * 4 - 113, version * 4 - 93, version * 4 - 68, version * 4 - 41, version * 4 - 15, version * 4 + 11};
+		for (int i = 1; i <= 7; ++i) {
+			for (int j = 1; j <= 7; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 7) || (i == 7 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+	if (39 <= version && version <= 40) {
+		int pos[8] = {0, 7, version * 4 - 129, version * 4 - 101, version * 4 - 73, version * 4 - 45, version * 4 - 17, version * 4 + 11};
+		for (int i = 1; i <= 7; ++i) {
+			for (int j = 1; j <= 7; ++j) {
+				if ((i == 1 && j == 1) || (i == 1 && j == 7) || (i == 7 && j == 1)) continue;
+				pixels[pos[i]][pos[j]] = 2;
+				for (int k = pos[i] - 2; k <= pos[i] + 2; ++k) {
+					pixels[pos[i] - 2][k - pos[i] + pos[j]] = pixels[k][pos[j] - 2] = pixels[pos[i] + 2][k - pos[i] + pos[j]] = pixels[k][pos[j] + 2] = 2;
+				}
+				for (int k = pos[i] - 1; k <= pos[i] + 1; ++k) {
+					pixels[pos[i] - 1][k - pos[i] + pos[j]] = pixels[k][pos[j] - 1] = pixels[pos[i] + 1][k - pos[i] + pos[j]] = pixels[k][pos[j] + 1] = 2;
+				}
+			}
+		}
+	}
+}
+void decoder::revertFormatInformation() {
+	/*
+	还原格式信息(纠错等级+掩码模式)
+	*/
+	int x = 0, code = 0;
+	for (int i = 1; i <= 6; ++i) {
+		x <<= 1;
+		x += !pixels[9][i];
+		pixels[9][i] = 2;
+	}
+	x <<= 1, x += !pixels[9][8], pixels[9][8] = 2;
+	x <<= 1, x += !pixels[9][9], pixels[9][9] = 2;
+	x <<= 1, x += !pixels[8][9], pixels[8][9] = 2;
+	for (int i = 6; i >= 1; --i) {
+		x <<= 1;
+		x += !pixels[i][9];
+		pixels[i][9] = 2;
+	}
+	code = x;
+	x = 0;
+	for (int i = height; i >= height - 6; --i) {
+		x <<= 1;
+		x += !pixels[i][9];
+		pixels[i][9] = 2;
+	}
+	pixels[height - 7][9] = 2;
+	for (int i = width - 7; i <= width; ++i) {
+		x <<= 1;
+		x += !pixels[9][i];
+		pixels[9][i] = 2;
+	}
+	assert(x == code);
+	code ^= 21522;
+	errorCorrectionLevel = (code >> 13 & 3) == 0 ? 'M' : (code >> 13 & 3) == 1 ? 'L' : (code >> 13 & 3) == 2 ? 'H' : 'Q';
+	index = errorCorrectionLevel == 'H' ? 0 : errorCorrectionLevel == 'Q' ? 1 : errorCorrectionLevel == 'M' ? 2 : 3;
+	mask = (code >> 10) & 7;
+}
+void decoder::revertVersionInformation() {
+	/*
+	还原版本信息(版本7及以上才有)
+	这里仅作验证用途, 并不实际还原版本号
+	*/
+	if (version < 7 || version>40) return;
+	int x = 0, rec = 0;
+	for (int i = 6; i >= 1; --i) {
+		for (int j = width - 8; j >= width - 10; --j) {
+			x <<= 1;
+			x += !pixels[i][j];
+			pixels[i][j] = 2;
+		}
+	}
+	rec = x;
+	x = 0;
+	for (int j = 6; j >= 1; --j) {
+		for (int i = height - 8; i >= height - 10; --i) {
+			x <<= 1;
+			x += !pixels[i][j];
+			pixels[i][j] = 2;
+		}
+	}
+	assert(x == rec);
+	x = version << 12;
+	for (int i = 5; i >= 0; --i) {
+		if ((x & (1 << (i + 12))) != 0) {
+			x ^= 0x1f25 << i;
+		}
+	}
+	assert(rec == (version << 12) + x);
+}
+void decoder::revertMaskcode() {
+	/*
+	还原掩码模式(对未标记为 2 的格子进行还原)
+	*/
+	for (int i = 1; i <= height; ++i) {
+		for (int j = 1; j <= width; ++j) {
+			if (pixels[i][j] != 2) {
+				if (mask == 0) {
+					if ((i - 1 + j - 1) % 2 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+				if (mask == 1) {
+					if ((i - 1) % 2 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+				if (mask == 2) {
+					if ((j - 1) % 3 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+				if (mask == 3) {
+					if ((i - 1 + j - 1) % 3 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+				if (mask == 4) {
+					if (((i - 1) / 2 + (j - 1) / 3) % 2 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+				if (mask == 5) {
+					if ((i - 1) * (j - 1) % 2 + (i - 1) * (j - 1) % 3 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+				if (mask == 6) {
+					if (((i - 1) * (j - 1) % 2 + (i - 1) * (j - 1) % 3) % 2 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+				if (mask == 7) {
+					if (((i - 1) + (j - 1) % 2 + (i - 1) * (j - 1) % 3) % 2 == 0) pixels[i][j] ^= 0;
+					else pixels[i][j] ^= 1;
+				}
+			}
+		}
+	}
+}
+void decoder::revertDataInformation() {
+	/*
+	蛇形还原数据信息(也就是实际存储的信息)
+	*/
+	int range = 1;
+	bool up = 1;
+	for (int j = width - 1; j >= 1; j -= 2) {
+		if (j == 6) --j;
+		if (up) {
+			for (int i = height; i >= 1; --i) {
+				if (pixels[i][j + 1] != 2) rdata[range++] = pixels[i][j + 1] == 1 ? '1' : '0';
+				if (pixels[i][j] != 2) rdata[range++] = pixels[i][j] == 1 ? '1' : '0';
+			}
+			up = 0;
+			continue;
+		}
+		if (!up) {
+			for (int i = 1; i <= height; ++i) {
+				if (pixels[i][j + 1] != 2) rdata[range++] = pixels[i][j + 1] == 1 ? '1' : '0';
+				if (pixels[i][j] != 2) rdata[range++] = pixels[i][j] == 1 ? '1' : '0';
+			}
+			up = 1;
+			continue;
+		}
+	}
+}
+vector<int> decoder::revertBlockData(const vector<int>& blockData) {
+	return vector<int>(blockData.begin(), blockData.begin() + blockLength1[index][version] + blockLength2[index][version]);
+}
+void decoder::revertExtraData() {
+	rdata[0] = '#';
+	int range = strlen(rdata) - 1;
+	vector<vector<int>> rec;
+	vector<int> temp;
+	rec.resize(blockNum1[index][version]);
+	for (auto &p:rec) {
+		p.resize(blockLength1[index][version] + errorLength[index][version]);
+	}
+	if (14 <= version && version <= 20) {
+		range -= 3;
+	}
+	if (2 <= version && version <= 6) {
+		range -= 7;
+	}
+	if (blockNum2[index][version]) {
+		rec.resize(blockNum1[index][version] + blockNum2[index][version]);
+		for (auto &p:rec) {
+			p.resize(max(blockLength1[index][version] + errorLength[index][version], blockLength2[index][version]));
+		}
+		for (int i = blockLength1[index][version] + errorLength[index][version] - 1; i >= blockLength1[index][version]; --i) {
+			for (int j = blockNum1[index][version] + blockNum2[index][version] - 1; j >= blockNum1[index][version]; --j) {
+				int x = 0;
+				for (int k = 0; k < 8; ++k) {
+					x += (rdata[range--] - 48) << k;
+				}
+				rec[j][i] = x;
+			}
+			for (int j = blockNum1[index][version] - 1; j >= 0; --j) {
+				int x = 0;
+				for (int k = 0; k < 8; ++k) {
+					x += (rdata[range--] - 48) << k;
+				}
+				rec[j][i] = x;
+			}
+		}
+		for (int i = blockLength2[index][version] - 1; i >= 0; --i) {
+			for (int j = blockNum1[index][version] + blockNum2[index][version] - 1; j >= 0; --j) {
+				if (j < blockNum1[index][version] && i == blockLength1[index][version]) {
+					continue;
+				}
+				int x = 0;
+				for (int k = 0; k < 8; ++k) {
+					x += (rdata[range--] - 48) << k;
+				}
+				rec[j][i] = x;
+			}
+		}
+		for (int i = 0; i < blockNum2[index][version]; ++i) {
+			temp = revertBlockData(rec[i + blockNum1[index][version]]);
+			for (int j = 1; j <= (blockLength2[index][version] << 3); ++j) {
+				data[j + i * (blockLength2[index][version] << 3) + blockNum1[index][version] * (blockLength1[index][version] << 3)] = (temp[(j - 1) / 8] >> (7 - (j - 1) % 8) & 1) + 48;
+			}
+		}
+	}
+	else {
+		for (int i = blockLength1[index][version] + errorLength[index][version] - 1; i >= 0; --i) {
+			for (int j = blockNum1[index][version] - 1; j >= 0; --j) {
+				int x = 0;
+				for (int k = 0; k < 8; ++k) {
+					x += (rdata[range--] - 48) << k;
+				}
+				rec[j][i] = x;
+			}
+		}
+	}
+	for (int i = 0; i < blockNum1[index][version]; ++i) {
+		temp = revertBlockData(rec[i]);
+		for (int j = 1; j <= (blockLength1[index][version] << 3); ++j) {
+			data[j + i * (blockLength1[index][version] << 3)] = (temp[(j - 1) / 8] >> (7 - (j - 1) % 8) & 1) + 48;
+		}
+	}
+	// puts("");
+	// data[0] = '#';
+	// for (int i = 0; i <= strlen(data); ++i) {
+	// 	cout<<data[i];
+	// }
+}
+void decoder::revertData() {
+	data[0] = '#';
+	int range = 0, len = 0;
+	if (data[1] == '0' && data[2] == '0' && data[3] == '0' && data[4] == '1') {
+		mode = 1; // 数字模式
+		if (version <= 9) range = 14;
+		if (version > 9 && version <= 26) range = 16;
+		if (version >= 27) range = 18;
+		for (int i = 5; i <= range; ++i) {
+			len = (len << 1) + (data[i] - 48);
+		}
+		for (int i = 0; i < len; i += 3) {
+			int x = 0;
+			if (i == len - 1) { // 只剩一位
+				for (int j = 0; j < 4; ++j) {
+					x = (x << 1) + (data[range + 1 + i / 3 * 10 + j] - 48);
+				}
+				text += (unsigned char)(x % 10 + 48);
+			}
+			if (i == len - 2) { // 只剩两位
+				for (int j = 0; j < 7; ++j) {
+					x = (x << 1) + (data[range + 1 + i / 3 * 10 + j] - 48);
+				}
+				text += (unsigned char)(x / 10 % 10 + 48);
+				text += (unsigned char)(x % 10 + 48);
+			}
+			for (int j = 0; j < 10; ++j) {
+				x = (x << 1) + (data[range + 1 + i / 3 * 10 + j] - 48);
+			}
+			text += (unsigned char)(x / 100 + 48);
+			text += (unsigned char)(x / 10 % 10 + 48);
+			text += (unsigned char)(x % 10 + 48);
+		}
+	}
+	if (data[1] == '0' && data[2] == '0' && data[3] == '1' && data[4] == '0') {
+		mode = 2; // 字符模式
+		if (version <= 9) range = 13;
+		if (version > 9 && version <= 26) range = 15;
+		if (version >= 27) range = 17;
+		for (int i = 5; i <= range; ++i) {
+			len = (len << 1) + (data[i] - 48);
+		}
+		for (int i = 0; i < len; ++i) {
+			int x = 0;
+			if (i + 1 == len) { // 只剩一位
+				for (int j = 0; j < 6; ++j) {
+					x = (x << 1) + (data[range + 1 + i * 11 + j] - 48);
+				}
+				if (x < 10) text += (unsigned char)(x + 48);
+				if (10 <= x && x < 36) text += (unsigned char)(x + 55);
+				if (x == 36) text += ' ';
+				if (x == 37) text += '$';
+				if (x == 38) text += '%';
+				if (x == 39) text += '*';
+				if (x == 40) text += '+';
+				if (x == 41) text += '-';
+				if (x == 42) text += '.';
+				if (x == 43) text += '/';
+				if (x == 44) text += ':';
+				break;
+			}
+			for (int j = 0; j < 11; ++j) {
+				x = (x << 1) + (data[range + 1 + i * 11 + j] - 48);
+			}
+			if (x / 45 < 10) text += (x / 45 + 48);
+			if (10 <= x / 45 && x / 45 < 36) text += (x / 45 + 55);
+			if (x / 45 == 36) text += ' ';
+			if (x / 45 == 37) text += '$';
+			if (x / 45 == 38) text += '%';
+			if (x / 45 == 39) text += '*';
+			if (x / 45 == 40) text += '+';
+			if (x / 45 == 41) text += '-';
+			if (x / 45 == 42) text += '.';
+			if (x / 45 == 43) text += '/';
+			if (x / 45 == 44) text += ':';
+			if (x % 45 < 10) text += (unsigned char)(x % 45 + 48);
+			if (10 <= x % 45 && x % 45 < 36) text += (unsigned char)(x % 45 + 55);
+			if (x % 45 == 36) text += ' ';
+			if (x % 45 == 37) text += '$';
+			if (x % 45 == 38) text += '%';
+			if (x % 45 == 39) text += '*';
+			if (x % 45 == 40) text += '+';
+			if (x % 45 == 41) text += '-';
+			if (x % 45 == 42) text += '.';
+			if (x % 45 == 43) text += '/';
+			if (x % 45 == 44) text += ':';
+		}
+	}
+	if (data[1] == '0' && data[2] == '1' && data[3] == '0' && data[4] == '0') {
+		mode = 4; // 字节模式
+		if (version <= 9) range = 12;
+        if (version > 9) range = 20;
+        for (int i = 5; i <= range; ++i) {
+			len = (len << 1) + (data[i] - 48);
+        }
+		for (int i = 0; i < len; ++i) {
+			int x = 0;
+			for (int j = 0; j < 8; ++j) {
+				x = (x << 1) + (data[range + 1 + i * 8 + j] - 48);
+			}
+			text += (unsigned char)(x);
+		}
+	}
+	if (data[1] == '1' && data[2] == '0' && data[3] == '0' && data[4] == '0') {
+		mode = 8; // 汉字模式
+        if (version <= 9) range = 12;
+        if (version > 9 && version <= 26) range = 14;
+        if (version > 26) range = 16;
+        for (int i = 5; i <= range; ++i) {
+			len = (len << 1) + (data[i] - 48);
+        }
+		for (int i = 0; i < len; ++i) {
+			int x = 0;
+			for (int j = 0; j < 13; ++j) {
+				x = (x << 1) + (data[range + 1 + i * 13 + j] - 48);
+			}
+			uint16_t high = x / 0xC0;
+			uint16_t low = x % 0xC0;
+			uint16_t gbk = (high << 8) + low;
+			if (gbk <= 0x1EBC) gbk += 0x8140;
+			else gbk += 0xC140;
+			string oneChar = SjisToUtf8(gbk);
+			if (oneChar[0] < 0x80) {
+				text += oneChar;
+			}
+			else {
+				text += oneChar;
+			}
+		}
+	}
+}
+void decoder::printText() {
+	if (mode == 8) SetConsoleOutputCP(65001);
+	cout << text;
 }
