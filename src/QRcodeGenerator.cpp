@@ -6,7 +6,7 @@
 #include <vector>
 int main() {
     string s="https://github.com/Larryyyyyyy/QRcode_generator-remade-";
-    encoder x(10, 'Q', 3, s);
+    encoder x(10, 'L', 7, s);
     write_bmp("recording.bmp", x.drawAll());
     decoder y(x.pixels);
     return 0;

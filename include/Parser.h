@@ -130,7 +130,7 @@ public:
     void revertVersionInformation();
     void revertMaskcode();
     void revertDataInformation();
-    vector<int> revertBlockData(const vector<int>& blockData);
+    vector<int> revertBlockData(vector<int>& blockData);
     void revertExtraData();
     void revertData();
     void printText();

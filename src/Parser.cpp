@@ -3,25 +3,28 @@
 #include <windows.h>
 encoder::encoder(int scale, int errorCorrectionLevel, int mask, string text)
     : scale(scale), errorCorrectionLevel(errorCorrectionLevel), mask(mask), text(text) {
+	/*
+	scale: 生成二维码的单个小方块的边长像素数
+	errorCorrectionLevel: 纠错等级, 可以是 H, Q, M, L
+	mask: 掩码种类, 可以是 0~7 的任何一个整数
+	text: 待加密内容
+	*/
 	memset(filled, 0, sizeof(filled));
     index = errorCorrectionLevel == 'H' ? 0 : errorCorrectionLevel == 'Q' ? 1 : errorCorrectionLevel == 'M' ? 2 : 3;
 	mode = judgeMode();
 	version = confirmVersion();
 	width = ((version - 1) * 4 + 21), height = ((version - 1) * 4 + 21);
-	vector<uint32_t> temp(this->width + 2, 2);
-	for (int i = 0; i < this->height + 2; ++i) pixels.push_back(temp);
+	pixels.assign(this->height + 2, vector<uint32_t>(this->width + 2, 2));
 	rwidth = ((this->width + 2) * this->scale);
 	rheight = ((this->height + 2) * this->scale);
-	vector<uint32_t> rtemp(this->rwidth, 2);
-	for (int i = 0; i <= this->rheight; ++i) rpixels.push_back(rtemp);
+	rpixels.assign(this->rheight + 1, vector<uint32_t>(this->rwidth, 2));
 }
 encoder::~encoder() {}
 vector<vector<uint32_t>> encoder::drawAll() {
+	/*
+	加密数据和生成二维码位流信息
+	*/
 	int len = getData();
-	// data[0]='#';
-	// for(auto c:data) {
-	// 	cout<<c;
-	// }
 	len = getExtraData();
 	drawPositionDetectionPattern();
 	drawTimingPattern();
@@ -819,7 +822,7 @@ int encoder::getExtraData() {
 }
 vector<int> encoder::solveBlockData(vector<int> v) {
 	/*
-	对单个数据块进行Reed-Solomon编码, 生成纠错码
+	对单个数据块进行 Reed-Solomon 编码, 生成纠错码
 	*/
 	vector<int> blockData;
 	int len1 = v.size() / 8, len2 = errorLength[index][version];
@@ -833,9 +836,10 @@ vector<int> encoder::solveBlockData(vector<int> v) {
 	return encoder.encode(blockData);
 }
 decoder:: decoder(vector<vector<uint32_t>> _pixels) {
+	/*
+	_pixels: 待解密的内容, 其一位代表二维码单个小方块的内容
+	*/
 	pixels = _pixels;
-	errorCorrectionLevel = 'H';
-	mask = 3;
 	width = _pixels.size() - 2;
 	height = _pixels[0].size() - 2;
 	version = (width - 21) / 4 + 1;
@@ -845,7 +849,7 @@ decoder:: decoder(vector<vector<uint32_t>> _pixels) {
 decoder:: ~decoder() {}
 void decoder::revertAll() {
 	/*
-	还原所有功能图案
+	解码功能信息和数据信息
 	*/
 	revertPositionDetectionPattern();
 	revertTimingPattern();
@@ -1296,10 +1300,18 @@ void decoder::revertDataInformation() {
 		}
 	}
 }
-vector<int> decoder::revertBlockData(const vector<int>& blockData) {
+vector<int> decoder::revertBlockData(vector<int>& blockData) {
+	/*
+	对单个数据块进行 Reed-Solomon 解码, 剔除纠错码
+	*/
+	ReedSolomonDecoder decoder(blockLength1[index][version] + blockLength2[index][version] + errorLength[index][version], blockLength1[index][version] + blockLength2[index][version]);
+	decoder.decode(blockData);
 	return vector<int>(blockData.begin(), blockData.begin() + blockLength1[index][version] + blockLength2[index][version]);
 }
 void decoder::revertExtraData() {
+	/*
+	分块数据段, 分别解码
+	*/
 	rdata[0] = '#';
 	int range = strlen(rdata) - 1;
 	vector<vector<int>> rec;
@@ -1371,13 +1383,11 @@ void decoder::revertExtraData() {
 			data[j + i * (blockLength1[index][version] << 3)] = (temp[(j - 1) / 8] >> (7 - (j - 1) % 8) & 1) + 48;
 		}
 	}
-	// puts("");
-	// data[0] = '#';
-	// for (int i = 0; i <= strlen(data); ++i) {
-	// 	cout<<data[i];
-	// }
 }
 void decoder::revertData() {
+	/*
+	解析最终的二进制数据流, 得到被加密数据
+	*/
 	data[0] = '#';
 	int range = 0, len = 0;
 	if (data[1] == '0' && data[2] == '0' && data[3] == '0' && data[4] == '1') {
@@ -1509,6 +1519,9 @@ void decoder::revertData() {
 	}
 }
 void decoder::printText() {
+	/*
+	输出解密结果, 如果是汉字模式的解密结果, 需要切换输出编码设置
+	*/
 	if (mode == 8) SetConsoleOutputCP(65001);
 	cout << text;
 }
