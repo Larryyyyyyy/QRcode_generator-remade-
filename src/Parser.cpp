@@ -17,7 +17,7 @@ encoder::encoder(int scale, int errorCorrectionLevel, int mask, string text)
 	pixels.assign(this->height + 2, vector<uint32_t>(this->width + 2, 2));
 	rwidth = ((this->width + 2) * this->scale);
 	rheight = ((this->height + 2) * this->scale);
-	rpixels.assign(this->rheight + 1, vector<uint32_t>(this->rwidth, 2));
+	rpixels.assign(this->rheight, vector<uint32_t>(this->rwidth, 2));
 }
 encoder::~encoder() {}
 vector<vector<uint32_t>> encoder::drawAll() {
@@ -89,7 +89,7 @@ void encoder::drawAlignmentPattern() {
 		}
 	}
 	if (7 <= version && version <= 13) {
-		int pos[4] = { 0,7,version * 2 + 9, version * 4 + 11};
+		int pos[4] = {0, 7,version * 2 + 9, version * 4 + 11};
 		for (int i = 1; i <= 3; ++i) {
 			for (int j = 1; j <= 3; ++j) {
 				if ((i == 1 && j == 1) || (i == 1 && j == 3) || (i == 3 && j == 1)) continue;
@@ -104,7 +104,7 @@ void encoder::drawAlignmentPattern() {
 		}
 	}
 	if (14 <= version && version <= 16) {
-		int pos[5] = {0,7,27,version * 2 + 19, version * 4 + 11};
+		int pos[5] = {0, 7, 27, version * 2 + 19, version * 4 + 11};
 		for (int i = 1; i <= 4; ++i) {
 			for (int j = 1; j <= 4; ++j) {
 				if ((i == 1 && j == 1) || (i == 1 && j == 4) || (i == 4 && j == 1)) continue;

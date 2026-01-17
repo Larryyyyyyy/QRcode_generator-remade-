@@ -17,10 +17,13 @@ QRcode(remade)/
 ├── include/
 │   ├── Parser.h
 │   ├── Drawer.h
-│   └── Utils.h
+│   ├── Utils.h
+│   ├── Stb_image.h                 # 图像解码, 参考 https://github.com/nothings/stb/tree/master
+│   └── Image.h
 ├── src/
 │   ├── Parser.cpp                  # 输出二维码信息的比特流
 │   ├── Drawer.cpp                  # 根据比特流输出 bmp 后缀图像
+│   ├── Image.cpp                   # 图像处理, 借鉴 https://github.com/LazarSoft/jsqrcode
 │   └── QRcodeGenerator.cpp         # 调用接口示例
 ├── utils/
 │   ├── encodeConversion.cpp        # Utf-8 到 sjis 和 GBK 编码的转换
@@ -36,15 +39,16 @@ QRcode(remade)/
 ### 调试
 
 ```cmd
-g++ -O2 src\QRcodeGenerator.cpp src\Parser.cpp src\Drawer.cpp utils\encodeConversion.cpp utils\reedSolomon.cpp -o main.exe
+g++ -O3 src\QRcodeGenerator.cpp src\Parser.cpp src\Drawer.cpp src\Image.cpp utils\encodeConversion.cpp utils\reedSolomon.cpp -o main.exe
 ```
 
 ## 后续计划
 
 ### 工具化
 
-将这个项目内置为自己个人网站的工具。
+将这个项目内置为自己个人网站的工具。(×)
 
 ### 解码器
 
-二维码解码器。
+二维码解码器。(√)
+完善里德所罗门码解码算法。(×)

@@ -25,11 +25,11 @@ void write_bmp(const char* filename, const vector<vector<uint32_t>>& pixels) {
     file.write(reinterpret_cast<char*>(&file_header), sizeof(file_header));
     file.write(reinterpret_cast<char*>(&info_header), sizeof(info_header));
 
-    // 写入像素数据（从最后一行开始）
+    // 写入像素数据(从最后一行开始)
     for (int y = height - 1; y >= 0; --y) {
         for (int x = 0; x < width; ++x) {
             uint32_t color = pixels[y][x];
-            // 分解为B、G、R三个字节
+            // 分解为B, G, R三个字节
             uint8_t blue = color & 0xFF;
             uint8_t green = (color >> 8) & 0xFF;
             uint8_t red = (color >> 16) & 0xFF;

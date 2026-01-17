@@ -1,3 +1,6 @@
 .vscode/
 *.exe
 *.bmp
+*.png
+*.jpg
+*.out
